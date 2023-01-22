@@ -180,6 +180,8 @@ class StyTrans(nn.Module):
         """ The forward expects a NestedTensor, which consists of:
                - samples.tensor: batched images, of shape [batch_size x 3 x H x W]
                - samples.mask: a binary mask of shape [batch_size x H x W], containing 1 on padded pixels
+               #TODO
+               Use mask zeros like at first, then optimize
 
         """
         content_input = samples_c

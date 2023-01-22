@@ -113,6 +113,11 @@ class TransformerDecoder(nn.Module):
                 memory_key_padding_mask: Optional[Tensor] = None,
                 pos: Optional[Tensor] = None,
                 query_pos: Optional[Tensor] = None):
+        """
+        gets called from stytr forward with:
+        hs = self.decoder(content, style, memory_key_padding_mask=mask,
+                          pos=pos_embed_s, query_pos=pos_embed_c)[0]
+        """
         output = tgt
 
         intermediate = []
@@ -233,6 +238,7 @@ class TransformerDecoderLayer(nn.Module):
                      memory_key_padding_mask: Optional[Tensor] = None,
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
+
 
        
         q = self.with_pos_embed(tgt, query_pos)
