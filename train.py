@@ -17,8 +17,10 @@ from torchvision.utils import save_image
 
 def train_transform():
     transform_list = [
-        transforms.Resize(size=(512, 512)),
-        transforms.RandomCrop(256),
+        transforms.Resize(size=(128, 432)),
+        # transforms.Resize(size=(512, 512)),
+        # transforms.RandomCrop(256),
+        # transforms.RandomCrop(256),
         transforms.ToTensor()
     ]
     return transforms.Compose(transform_list)
@@ -64,9 +66,9 @@ def warmup_learning_rate(optimizer, iteration_count):
 
 parser = argparse.ArgumentParser()
 # Basic options
-parser.add_argument('--content_dir', default='./datasets/train2014', type=str,   
+parser.add_argument('--content_dir', default='./images1', type=str,   
                     help='Directory path to a batch of content images')
-parser.add_argument('--style_dir', default='./datasets/Images', type=str,  #wikiart dataset crawled from https://www.wikiart.org/
+parser.add_argument('--style_dir', default='./images2', type=str,  #wikiart dataset crawled from https://www.wikiart.org/
                     help='Directory path to a batch of style images')
 parser.add_argument('--vgg', type=str, default='./experiments/vgg_normalised.pth')  #run the train.py, please download the pretrained vgg checkpoint
 
@@ -78,7 +80,7 @@ parser.add_argument('--log_dir', default='./logs',
 parser.add_argument('--lr', type=float, default=5e-4)
 parser.add_argument('--lr_decay', type=float, default=1e-5)
 parser.add_argument('--max_iter', type=int, default=160000)
-parser.add_argument('--batch_size', type=int, default=8)
+parser.add_argument('--batch_size', type=int, default=1)
 parser.add_argument('--style_weight', type=float, default=10.0)
 parser.add_argument('--content_weight', type=float, default=7.0)
 parser.add_argument('--n_threads', type=int, default=16)
@@ -109,10 +111,15 @@ embedding = StyTR.PatchEmbed()
 Trans = transformer.Transformer()
 with torch.no_grad():
     network = StyTR.StyTrans(vgg,decoder,embedding, Trans,args)
+
 network.train()
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+x = count_parameters(network)
+print(x)
 network.to(device)
-network = nn.DataParallel(network, device_ids=[0,1])
+network = nn.DataParallel(network, device_ids=[0])
 content_tf = train_transform()
 style_tf = train_transform()
 
@@ -120,6 +127,7 @@ style_tf = train_transform()
 
 content_dataset = FlatFolderDataset(args.content_dir, content_tf)
 style_dataset = FlatFolderDataset(args.style_dir, style_tf)
+# exit()
 
 content_iter = iter(data.DataLoader(
     content_dataset, batch_size=args.batch_size,

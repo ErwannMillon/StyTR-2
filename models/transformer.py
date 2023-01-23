@@ -45,12 +45,15 @@ class Transformer(nn.Module):
     def forward(self, style, mask , content, pos_embed_c, pos_embed_s):
 
         # content-aware positional embedding
+        #change avg pooling to roughly halving (16, 54) to (8, 27)
         content_pool = self.averagepooling(content)       
         pos_c = self.new_ps(content_pool)
         pos_embed_c = F.interpolate(pos_c, mode='bilinear',size= style.shape[-2:])
 
+        B, C, H, W = style.shape
         ###flatten NxCxHxW to HWxNxC     
         style = style.flatten(2).permute(2, 0, 1)
+        #should always be None
         if pos_embed_s is not None:
             pos_embed_s = pos_embed_s.flatten(2).permute(2, 0, 1)
       
@@ -58,18 +61,22 @@ class Transformer(nn.Module):
         if pos_embed_c is not None:
             pos_embed_c = pos_embed_c.flatten(2).permute(2, 0, 1)
      
-        
+        #mask, posembed_s, is none 
         style = self.encoder_s(style, src_key_padding_mask=mask, pos=pos_embed_s)
         content = self.encoder_c(content, src_key_padding_mask=mask, pos=pos_embed_c)
         hs = self.decoder(content, style, memory_key_padding_mask=mask,
                           pos=pos_embed_s, query_pos=pos_embed_c)[0]
         
         ### HWxNxC to NxCxHxW to
-        N, B, C= hs.shape          
-        H = int(np.sqrt(N))
-        hs = hs.permute(1, 2, 0)
-        hs = hs.view(B, C, -1,H)
+        # N, B, C= hs.shape          
+        # H = int(np.sqrt(N))
+        # hs = hs.permute(1, 2, 0)
+        # hs = hs.view(B, C, -1,H)
 
+        hs = hs.permute(1, 2, 0)
+        hs = hs.view(B, C, H, W)
+
+        # return hs
         return hs
 
 
